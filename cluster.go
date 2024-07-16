@@ -1,6 +1,7 @@
 package main
 import (
 	"github.com/hashicorp/memberlist"
+	"log"
 )
 
 type Node struct {
@@ -15,11 +16,12 @@ type Cluster struct {
 	store 	  *KVStore 
 }
 
-func NewCluster(localNode *Node, store *KVStore) (*Cluster, error) {
+func NewCluster(localNode *Node, store *KVStore, logger *log.Logger) (*Cluster, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = localNode.Name
 	config.BindAddr = localNode.Addr
 	config.BindPort = localNode.Port
+	config.Logger = logger
 	list, err := memberlist.Create(config)
 	if err != nil {
 		return nil, err

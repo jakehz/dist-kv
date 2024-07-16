@@ -21,15 +21,18 @@ func main() {
 		log.Fatalf("Error parsing parameters: %v", err)
 	}
 	log.Printf(`Creating new node "%v" at %v`, config.name, config.FullAddr())
+
 	node := &Node{
 		Name: config.name, 
 		Addr: config.ipAddr,
 		Port: config.nodePort,
 	}
+	logger := setupLogging(config.name)
+	log.SetPrefix(fmt.Sprintf("[%v]", config.name))
 	store := NewKVStore()
 
 	// Starts listeners to allow other nodes to join this memberlist.
-	cluster, err := NewCluster(node, store)
+	cluster, err := NewCluster(node, store, logger)
 
 	if err != nil {
 		log.Fatalf("Failed to create cluster %v", err)
@@ -40,6 +43,16 @@ func main() {
 	api.Run(fmt.Sprintf(":%v", config.httpPort))
 }
 
+func setupLogging(nodeName string) *log.Logger{
+	prefixLogger := log.New(
+		os.Stdout, 
+		fmt.Sprintf("[%v]: ", nodeName),
+		log.LstdFlags,
+		)
+	log.SetOutput(prefixLogger.Writer())
+	log.SetFlags(0)
+	return prefixLogger
+}
 
 func parseParams(params []string) (*Config, error){
 	if len(params) != 5 {
