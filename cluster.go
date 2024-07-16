@@ -6,6 +6,7 @@ import (
 type Node struct {
 	Name string
 	Addr string
+	Port int
 }
 
 type Cluster struct {
@@ -18,9 +19,8 @@ func NewCluster(localNode *Node, store *KVStore) (*Cluster, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = localNode.Name
 	config.BindAddr = localNode.Addr
-
+	config.BindPort = localNode.Port
 	list, err := memberlist.Create(config)
-
 	if err != nil {
 		return nil, err
 	}
