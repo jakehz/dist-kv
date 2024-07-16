@@ -3,7 +3,7 @@ package main
 import (
 	//"encoding/json"
 	"net/http"
-
+	"fmt"
 	"github.com/gorilla/mux"
 )
 
@@ -42,5 +42,6 @@ func (api *API) deleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) Run(addr string){
+	fmt.Printf("Running server at %v", addr)
 	http.ListenAndServe(addr, api.router)
 }
