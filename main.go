@@ -16,7 +16,13 @@ type Config struct {
 }
 
 func main() {
-	config, err := parseParams(os.Args)
+	var config *Config
+	var err error
+	if len(os.Args) == 1 {
+		config, err = parseEnvParams()
+	} else {
+		config, err = parseParams(os.Args)
+	}
 	if err != nil {
 		log.Fatalf("Error parsing parameters: %v", err)
 	}
@@ -40,7 +46,7 @@ func main() {
 	
 	api := NewAPI(cluster)
 
-	api.Run(fmt.Sprintf(":%v", config.httpPort))
+	api.Run(fmt.Sprintf("%v:%v", config.ipAddr, config.httpPort))
 }
 
 func setupLogging(nodeName string) *log.Logger{
@@ -79,6 +85,25 @@ func parseParams(params []string) (*Config, error){
 	}, nil
 }
 
+func parseEnvParams() (*Config, error){
+	name     := os.Getenv("NODE_NAME")
+	ipAddr   := os.Getenv("IP_ADDR")
+	nodePort, err := strconv.Atoi(os.Getenv("NODE_PORT"))
+	if err != nil {
+		log.Fatalf("Error getting node port: %v", err)
+	}
+	httpPort, err := strconv.Atoi(os.Getenv("HTTP_PORT"))
+	if err != nil {
+		log.Fatalf("Error getting http port: %v", err)
+	}
+
+	return &Config{
+		name:     name,
+		nodePort: nodePort,
+		httpPort: httpPort,
+		ipAddr:   ipAddr,
+	}, nil
+}
 func (c *Config) FullAddr() string {
 	return fmt.Sprintf("%v:%v", c.ipAddr, c.nodePort)
 }
