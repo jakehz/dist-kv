@@ -36,13 +36,28 @@ func NewAPI(cluster *Cluster) *API {
 func (api *API) setupRoutes(){
 	api.router.HandleFunc("/set/{key}/{value}", api.setHandler).Methods("POST")
 	api.router.HandleFunc("/get/{key}", api.getHandler).Methods("GET")
+	api.router.HandleFunc("/get_whole_kv", api.getWholeKV).Methods("GET")
 	api.router.HandleFunc("/delete/{key}", api.deleteHandler).Methods("DELETE")
 	api.router.HandleFunc("/join", api.joinClusterFromNode).Methods("POST")
 }
 
 func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 	// handle set request 
-	
+	// Get variables from url
+	vars := mux.Vars(r)
+	key := vars["key"]
+	val := vars["value"]
+	api.cluster.store.Set(key, val)
+	fmt.Fprintf(w, "{\"success\": true}")
+}
+
+func (api *API) getWholeKV(w http.ResponseWriter, r *http.Request){
+	regMap := map[string]interface{}{}
+	api.cluster.store.data.Range(func(key, value interface{}) bool{
+		regMap[fmt.Sprint(key)] = value 
+		return true
+	})
+	fmt.Fprintf(w, "{\"data\": %v}", regMap)
 }
 
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,4 +85,13 @@ func (api *API) joinClusterFromNode(w http.ResponseWriter, r *http.Request) {
 func (api *API) Run(addr string){
 	fmt.Printf("Running server at %v\n", addr)
 	http.ListenAndServe(addr, api.router)
+}
+
+func parseKV(r *http.Request) (*KVPair, error) {
+	var pair KVPair
+	err := json.NewDecoder(r.Body).Decode(&pair)
+	if err != nil {
+		return nil, err
+	}
+	return &pair, nil
 }
