@@ -1,0 +1,21 @@
+services:
+  node1:
+    build: .
+    ports:
+      - "8080:8080"
+      - "1234:1234"
+    environment:
+      - NODE_NAME=node1
+      - IP_ADDR=0.0.0.0
+      - NODE_PORT=1234
+      - HTTP_PORT=8080
+  node2:
+    build: .
+    ports:
+      - "8081:8081"
+      - "1235:1235"
+    environment:
+      - NODE_NAME=node2
+      - IP_ADDR=0.0.0.0
+      - NODE_PORT=1235
+      - HTTP_PORT=8081
