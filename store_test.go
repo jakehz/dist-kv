@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -29,4 +30,13 @@ func TestKVStoreStrNotFound(t *testing.T){
 	if ret != "" {
 		t.Fatalf(`value at key "%v" should be EMPTY, not equal to "%v"`, key, ret)
 	}
+}
+
+func TestGetSerializedUnserialize(t *testing.T) {
+	kvs := NewKVStore()
+	kvs.Set("test", "test-data")
+	kvs.Set("test2", "test2-data")
+	b := kvs.GetSerializedMap()
+	fmt.Printf("b: %v\n", b)
+	kvs.LoadSerializedMap(b)
 }
