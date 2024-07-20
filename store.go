@@ -4,7 +4,6 @@ import (
 	"sync"
 	"encoding/gob"
 	"bytes"
-	"log"
 )
 
 type KVStore struct {
@@ -63,8 +62,10 @@ func (s *KVStore) LoadSerializedMap(data []byte) {
 	if err != nil {
 			panic(err)
 	}
-
-	log.Printf("%v", decodedMap)
+	
+	for k, v := range decodedMap {
+		s.Set(k, v)
+	}
 }
 
 

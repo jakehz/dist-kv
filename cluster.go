@@ -60,18 +60,13 @@ func (c Cluster) GetBroadcasts(overhead, limit int) [][]byte {
 func (c Cluster) MergeRemoteState(buf []byte, join bool) {
 	// Recieves data from remote nodes
 	log.Printf("Merge remote state \n")
-	log.Printf("%v \n", buf)
+	c.store.LoadSerializedMap(buf)
 }
 
 func (c Cluster) LocalState(join bool) []byte {
 	// Sends local state to remote nodes:
 	log.Printf("Sending local data ")
-	val, ok := c.store.Get("test")
-	if ok {
-		return []byte(val)
-	} else {
-		return []byte{}
-	}
+	return c.store.GetSerializedMap()
 }
 
 
