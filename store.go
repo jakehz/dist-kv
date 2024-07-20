@@ -4,6 +4,7 @@ import (
 	"sync"
 	"encoding/gob"
 	"bytes"
+	"log"
 )
 
 type KVStore struct {
@@ -41,31 +42,39 @@ func (s *KVStore) GetSerializedMap() []byte{
 		return true
 	}
 	s.data.Range(iter)
+	return SerializeMap(data)
+}
+
+func (s *KVStore) LoadSerializedMap(data []byte) {
+	decodedMap := DeserializeMap(data)
+	for k, v := range decodedMap {
+		s.Set(k, v)
+	}
+}
+
+func DeserializeMap(data []byte) map[string]string {
+	decodedMap := make(map[string]string)
+	b := bytes.NewBuffer(data)
+	d := gob.NewDecoder(b)
+	// Decoding the serialized data
+	err := d.Decode(&decodedMap)
+	if err != nil {
+		log.Printf("Error unserializing map: %v\n", err)
+		return make(map[string]string)
+	}
+	return decodedMap
+}
+
+func SerializeMap(data map[string]string) []byte {
 	b := new(bytes.Buffer)
 	e := gob.NewEncoder(b)
 
 	// Encoding the map
  	err := e.Encode(data)
 	if err != nil {
-			panic(err)
+		log.Printf("Error serializing map: %v\n", err)
+		return []byte{}
 	}
 	return b.Bytes()
 }
-
-func (s *KVStore) LoadSerializedMap(data []byte) {
-	b := bytes.NewBuffer(data)
-	var decodedMap map[string]string
-	d := gob.NewDecoder(b)
-
-	// Decoding the serialized data
-	err := d.Decode(&decodedMap)
-	if err != nil {
-			panic(err)
-	}
-	
-	for k, v := range decodedMap {
-		s.Set(k, v)
-	}
-}
-
 
