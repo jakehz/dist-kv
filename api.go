@@ -15,10 +15,6 @@ type API struct {
 	cluster *Cluster
 }
 
-type KVPair struct {
-	Key string `json:"key"`
-	Value string `json:"value"`
-}
 
 type ClusterIP struct {
 	IpAddress string `json:"ipAddress"`
@@ -39,15 +35,15 @@ func (api *API) setupRoutes(){
 	api.router.HandleFunc("/get_whole_kv", api.getWholeKV).Methods("GET")
 	api.router.HandleFunc("/delete/{key}", api.deleteHandler).Methods("DELETE")
 	api.router.HandleFunc("/join", api.joinClusterFromNode).Methods("POST")
+	api.router.HandleFunc("/get_memberlist", api.getMemberlist).Methods("GET")
 }
 
 func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
-	// handle set request 
 	// Get variables from url
 	vars := mux.Vars(r)
 	key := vars["key"]
 	val := vars["value"]
-	api.cluster.store.Set(key, val)
+	api.cluster.Set(key, val)
 	fmt.Fprintf(w, "{\"success\": true}")
 }
 
@@ -67,6 +63,17 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 func (api *API) deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func (api *API) getMemberlist(w http.ResponseWriter, r *http.Request) {
+	m := api.cluster.Memberlist.Members()
+	for _, node := range m {
+		if node != api.cluster.Memberlist.LocalNode() {
+		 api.cluster.pingOtherNode(node)
+		}
+	}
+	fmt.Fprintf(w, "%v", m)
+}
+
 
 func (api *API) joinClusterFromNode(w http.ResponseWriter, r *http.Request) {
 	var clusterIP ClusterIP

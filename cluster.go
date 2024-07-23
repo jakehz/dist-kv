@@ -50,9 +50,21 @@ func NewCluster(localNode *Node, store *KVStore, logger *log.Logger) (*Cluster, 
 }
 
 func (c Cluster) GetNodeForKey(key string) *memberlist.Node{
+	// For now we just use a simple implementation
+	// replace with Consistent Hashing scheme later down the line
 	idx := hash(key) % uint32(c.Memberlist.NumMembers())
-	log.Printf("Key: %v would be routed to Node %v", key, idx)
-	return nil
+	log.Printf(`Sending key "%v" to node %v`, key, idx+1)
+
+	// Memberlist doesn't maintain any specific order; 
+	// maybe we can refactor here to hash some attribute of a node 
+	// and order it according to the attribute.
+	return c.Memberlist.Members()[idx]
+}
+
+func (c Cluster) Set(key, value string) {
+	// Get the node mapping depending on key
+	node := c.GetNodeForKey(key)
+	c.Memberlist.SendBestEffort(node, SerializeKV(key, value))
 }
 
 // func (c Cluster) SendKVToNode(n *memberlist.Node, key, value string) error {
@@ -72,8 +84,10 @@ func (c Cluster) NodeMeta(limit int) []byte{
 }
 
 func (c Cluster) NotifyMsg(b []byte) {
-	log.Println("Notify Message")
-	log.Printf("%v\n", b)
+	log.Println("Recieved KV Pair")
+	// Deserialize key value pair
+	kv := DeserializeKV(b)
+	c.store.Set(kv.Key, kv.Value)
 }
 
 func (c Cluster) GetBroadcasts(overhead, limit int) [][]byte {
