@@ -48,6 +48,7 @@ func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) getWholeKV(w http.ResponseWriter, r *http.Request){
+	/*Get all key value pairs on this current node*/
 	regMap := map[string]interface{}{}
 	api.cluster.store.data.Range(func(key, value interface{}) bool{
 		regMap[fmt.Sprint(key)] = value 
@@ -94,8 +95,8 @@ func (api *API) Run(addr string){
 	http.ListenAndServe(addr, api.router)
 }
 
-func parseKV(r *http.Request) (*KVPair, error) {
-	var pair KVPair
+func parseKV(r *http.Request) (*KVReq, error) {
+	var pair KVReq
 	err := json.NewDecoder(r.Body).Decode(&pair)
 	if err != nil {
 		return nil, err

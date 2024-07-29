@@ -4,8 +4,15 @@ import (
 	"encoding/gob"
 	"bytes"
 	"log"
-
 	"github.com/hashicorp/memberlist"
+)
+
+type Operation string
+const (
+	CREATE Operation = "CREATE"
+	READ   Operation = "READ"
+	UPDATE Operation = "UPDATE"
+	DELETE Operation = "DELETE"
 )
 
 type Node struct {
@@ -20,9 +27,11 @@ type Cluster struct {
 	store 	  *KVStore 
 }
 
-type KVPair struct {
-	Key string `json:"key"`
-	Value string `json:"value"`
+type KVReq struct {
+	Key         string                `json:"key"`
+	Value       string                `json:"value"`
+	Op          Operation             `json:"op"`
+	ResNodeAddr memberlist.Address    `json:"response_node"`
 }
 
 
@@ -64,11 +73,21 @@ func (c Cluster) GetNodeForKey(key string) *memberlist.Node{
 func (c Cluster) Set(key, value string) {
 	// Get the node mapping depending on key
 	node := c.GetNodeForKey(key)
-	c.Memberlist.SendBestEffort(node, SerializeKV(key, value))
+	source_addr := c.Memberlist.LocalNode().FullAddress()
+	c.Memberlist.SendBestEffort(
+		node, 
+		SerializeKVReq(key, value, UPDATE, source_addr),
+	)
 }
 
+func (c Cluster) Get(key string) {
+	/* How do we get a key from another node?
+	For now we can just use HTTP. This is probably
+	not the most efficient. */
+	//idx := c.GetNodeForKey(key)
+}
 // func (c Cluster) SendKVToNode(n *memberlist.Node, key, value string) error {
-// 	kv := KVPair{key: key, value: value}
+// 	kv := KVReq{key: key, value: value}
 // 	// serialize KV pair
 //
 // }
@@ -84,9 +103,13 @@ func (c Cluster) NodeMeta(limit int) []byte{
 }
 
 func (c Cluster) NotifyMsg(b []byte) {
+	// This will run on _any_ msg we recieve from another node.
+	// We should be able to handle multiple things; key create, read, update, 
+	// and delete
 	log.Println("Recieved KV Pair")
 	// Deserialize key value pair
-	kv := DeserializeKV(b)
+	kv := DeserializeKVReq(b)
+	
 	c.store.Set(kv.Key, kv.Value)
 }
 
@@ -112,9 +135,9 @@ func (c Cluster) pingOtherNode(n *memberlist.Node) {
 	c.Memberlist.SendBestEffort(n, msg)
 }
 
-func SerializeKV(key, value string) []byte{
+func SerializeKVReq(key, value string, op Operation, addr memberlist.Address) []byte{
 	// Similar to SerializeMap... TODO: convert to generics later
-	kv := KVPair{key, value}
+	kv := KVReq{key, value, op, addr}
 	b := new(bytes.Buffer)
 	e := gob.NewEncoder(b)
 	err := e.Encode(kv)
@@ -125,8 +148,8 @@ func SerializeKV(key, value string) []byte{
 	return b.Bytes()
 }
 
-func DeserializeKV(data []byte) KVPair{
-	var kvPair KVPair
+func DeserializeKVReq(data []byte) KVReq{
+	var kvPair KVReq
 	b := bytes.NewBuffer(data)
 	d := gob.NewDecoder(b)
 	
