@@ -43,8 +43,11 @@ func (h *HashRing) GetNode(key string) *memberlist.Node{
 }
 
 func (h *HashRing) PlaceNode(node *memberlist.Node) {
+	if len(h.nodes) == 0{
+		return
+	}
 	id := h.NodeId(node)
-	idx := h.HashIdx(id)	
+	idx := h.HashIdx(id)
 	if len(h.nodes) == 1 {
 		h.nodes[0] = node
 		return

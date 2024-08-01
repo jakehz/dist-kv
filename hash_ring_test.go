@@ -97,4 +97,16 @@ func TestPlaceNodeOne(t *testing.T) {
 	}
 }
 
-
+func TestPlaceNodeZero(t *testing.T) {
+	// Ensure that placing a node in an empty ring does not result in error
+	// or a non-empty ring
+	const RING_SIZE = 0
+	// Create a single node
+	hashRing := NewHashRing(RING_SIZE)
+	node := NewNode("Node1")
+	// node1Idx :=  hashRing.HashIdx(hashRing.NodeId(&node))
+	hashRing.PlaceNode(&node)
+	if len(hashRing.nodes) != 0{
+		t.Fatalf("Node placed in hash ring of size zero. %v", hashRing.nodes)
+	}
+}
