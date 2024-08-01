@@ -156,7 +156,7 @@ func TestGetNodeOne(t *testing.T) {
 	}
 	resNode2 := hashRing.GetNode(key2)
 	// The original node should not be evicted. The ring 
-	// is full
+	// is full.
 	if resNode2.FullAddress().Addr != node.FullAddress().Addr{ 
 		t.Fatalf(`Node returned for key %v is not node expected: Expected:"%v" actual:"%v"`, key1, node.FullAddress().Addr, resNode2.FullAddress().Addr )
 	}
