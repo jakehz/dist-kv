@@ -33,14 +33,15 @@ func (h *HashRing) GetNode(key string) *memberlist.Node{
 	if len(h.nodes) == 1{
 		return h.nodes[0]
 	}
-	for i := idx; i != idx - 1; i++ {
-		if int(i) >= len(h.nodes) {
-			i = 0
-		}
+	for i := idx; int(i) < len(h.nodes); i++ {
 		if h.nodes[i] != nil {
 			return h.nodes[i]
 		}
-		
+	}
+	for i := 0; i < int(idx); i++{
+		if h.nodes[i] != nil {
+			return h.nodes[i]
+		}
 	}
 	return nil
 }
