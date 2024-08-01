@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	//"log"
 
 	"github.com/hashicorp/memberlist"
 )
@@ -51,20 +51,25 @@ func (h *HashRing) PlaceNode(node *memberlist.Node) {
 	}
 	id := h.NodeId(node)
 	idx := h.HashIdx(id)
-	if len(h.nodes) == 1 {
+	if len(h.nodes) == 1 && h.nodes[0] == nil {
 		h.nodes[0] = node
 		return
 	}
-	for i := idx; i != idx - 1; i++ {
-		if int(i) >= len(h.nodes){
-			i = 0
-		}
+	
+	// Check the list until the end
+	for i := idx; int(i) < len(h.nodes); i++ {
 		if h.nodes[i] == nil {
 			h.nodes[i] = node
 			return
 		}
-		
 	}
-	log.Println("Failed to place node; ring full.")
+	// if a free spot has not been found yet,
+	// start from beginning until we reach the beginning
+	for i := 0; uint32(i) < idx; i++ {
+		if h.nodes[i] == nil {
+			h.nodes[i] = node
+			return
+		}
+	}
 }
 

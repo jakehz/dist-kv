@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"testing"
+	"log"
 
 	"github.com/hashicorp/memberlist"
 )
@@ -74,6 +75,7 @@ func TestPlaceNodeTwo(t *testing.T) {
 	}
 }
 
+
 func TestPlaceNodeOne(t *testing.T) {
 	//Case: Test where two nodes map to the same index
 	const RING_SIZE = 1
@@ -135,7 +137,8 @@ func TestGetNodeTwo(t *testing.T) {
 }
 
 func TestGetNodeOne(t *testing.T) {
-	//Case: Test where two nodes map to one node ring
+	//Case: Test where two nodes map to one spot 
+	// in a ring with size 0
 	const RING_SIZE = 1
 	hashRing := NewHashRing(RING_SIZE)
 	// Create a single node
@@ -148,12 +151,14 @@ func TestGetNodeOne(t *testing.T) {
 	key1 := "key1"
 	key2 := "key2"
 	resNode1 := hashRing.GetNode(key1)
-	if resNode1.FullAddress().Addr != node2.FullAddress().Addr{ 
-		t.Fatalf(`Node returned for key %v is not node expected: Expected:"%v" actual:"%v"`, key1, node2.FullAddress().Addr, resNode1.FullAddress().Addr )
+	if resNode1.FullAddress().Addr != node.FullAddress().Addr{ 
+		t.Fatalf(`Node returned for key %v is not node expected: Expected:"%v" actual:"%v"`, key1, node.FullAddress().Addr, resNode1.FullAddress().Addr )
 	}
 	resNode2 := hashRing.GetNode(key2)
-	if resNode2.FullAddress().Addr != node2.FullAddress().Addr{ 
-		t.Fatalf(`Node returned for key %v is not node expected: Expected:"%v" actual:"%v"`, key1, node2.FullAddress().Addr, resNode2.FullAddress().Addr )
+	// The original node should not be evicted. The ring 
+	// is full
+	if resNode2.FullAddress().Addr != node.FullAddress().Addr{ 
+		t.Fatalf(`Node returned for key %v is not node expected: Expected:"%v" actual:"%v"`, key1, node.FullAddress().Addr, resNode2.FullAddress().Addr )
 	}
 }
 
@@ -168,5 +173,29 @@ func TestGetNodeZero(t *testing.T) {
 	hashRing.PlaceNode(&node)
 	if hashRing.GetNode("key1") != nil{
 		t.Fatalf("Node placed in hash ring of size zero. %v", hashRing.nodes)
+	}
+}
+
+func TestPlaceNodeThree(t *testing.T) {
+	/*Case: Test where three nodes are placed in the ring, 
+	and we only have space for two*/
+	const RING_SIZE = 2
+	hashRing := NewHashRing(RING_SIZE)
+	// Create a single node
+	// Node should always map to index 1
+	node := NewNode("Node1")
+	hashRing.PlaceNode(&node)
+	node2 := NewNode("Node2")
+	hashRing.PlaceNode(&node2)
+	node3 := NewNode("Node3")
+	log.Println(hashRing.HashIdx(hashRing.NodeId(&node3)))
+	hashRing.PlaceNode(&node3)
+	// Create another node that maps to the same idx
+	log.Println(hashRing.nodes)
+	expectedNodes := []*memberlist.Node{&node2, &node}
+	for i, _ := range expectedNodes {
+		if hashRing.nodes[i] != expectedNodes[i]{
+			t.Fatalf("Node not equal expected: %v Actual %v", hashRing.nodes[i], expectedNodes[i])
+		} 
 	}
 }
