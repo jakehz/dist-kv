@@ -3,7 +3,6 @@ package main
 import (
 	"net"
 	"testing"
-	//"log"
 
 	"github.com/hashicorp/memberlist"
 )
@@ -74,26 +73,28 @@ func TestPlaceNodeTwo(t *testing.T) {
 		t.Fatalf("Failed to place node %v in hash ring.", node2)
 	}
 }
-/*
+
 func TestPlaceNodeOne(t *testing.T) {
 	//Case: Test where two nodes map to the same index
 	const RING_SIZE = 1
 	// Create a single node
-	val :=  hash("0.0.0.0:12345:Node1") % RING_SIZE 
-	node := NewNode("Node1")
 	hashRing := NewHashRing(RING_SIZE)
-	log.Printf("Place node at index %v", val)
+	node := NewNode("Node1")
+	node1Idx :=  hashRing.HashIdx(hashRing.NodeId(&node))
 	hashRing.PlaceNode(&node)
-	if hashRing.nodes[val] == nil {
+	if hashRing.nodes[node1Idx] == nil && hashRing.nodes[node1Idx].Name == "Node1" {
 		t.Fatalf("Failed to place node %v in hash ring.", node)
 	}
 	// Create another node
-	val2 := hash("0.0.0.0:12346:Node2") % RING_SIZE 
 	node2 := NewNode("Node2")
-	log.Printf("Place node at index %v", val2)
+	node2Idx :=  hashRing.HashIdx(hashRing.NodeId(&node2))
+	if node2Idx != node1Idx{
+		t.Fatalf("Node2 idx should map Node1 idx")
+	}
 	hashRing.PlaceNode(&node2)
-	if hashRing.nodes[val2] == nil {
+	if hashRing.nodes[node2Idx] == nil && hashRing.nodes[node2Idx].Name =="Node2"{
 		t.Fatalf("Failed to place node %v in hash ring.", node2)
 	}
 }
-*/
+
+
