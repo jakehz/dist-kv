@@ -26,6 +26,9 @@ func (h *HashRing) NodeId(node *memberlist.Node) string {
 }
 
 func (h *HashRing) GetNode(key string) *memberlist.Node{
+	if len(h.nodes) == 0{
+		return nil
+	}
 	idx := h.HashIdx(key)	
 	if len(h.nodes) == 1{
 		return h.nodes[0]
